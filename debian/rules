@@ -1,4 +1,48 @@
 #!/usr/bin/make -f
 
+export DH_GOLANG_EXCLUDES := v2/examples/
+
+# # github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials
+# src/github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials/credentials_test.go:18:2: cannot find package "google.golang.org/grpc/examples/helloworld/helloworld" in any of:
+# 	/usr/lib/go-1.21/src/google.golang.org/grpc/examples/helloworld/helloworld (from $GOROOT)
+# 	/builds/jas/golang-github-spiffe-go-spiffe/debian/output/source_dir/_build/src/google.golang.org/grpc/examples/helloworld/helloworld (from $GOPATH)
+# FAIL	github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials [setup failed]
+#...
+# spurious failure:
+# === RUN   TestJWTSourceGetsUpdates
+#     workload_api.go:66: WorkloadAPI address: tcp://127.0.0.1:33483
+#     common_test.go:52:
+#         	Error Trace:	/build/golang-github-spiffe-go-spiffe-2.1.6/_build/src/github.com/spiffe/go-spiffe/v2/workloadapi/common_test.go:52
+#         	            				/build/golang-github-spiffe-go-spiffe-2.1.6/_build/src/github.com/spiffe/go-spiffe/v2/workloadapi/jwtsource_test.go:100
+#         	Error:      	An error is expected but got nil.
+#         	Test:       	TestJWTSourceGetsUpdates
+#         	Messages:   	JWT bundle should not exist
+# --- FAIL: TestJWTSourceGetsUpdates (0.01s)
+#...
+# weird segfault:
+# === RUN   TestValidateJWTSVID/first_audience_is_valid
+# panic: runtime error: invalid memory address or nil pointer dereference
+# [signal SIGSEGV: segmentation violation code=0x1 addr=0x10 pc=0x706bc0]
+#
+# goroutine 218 [running]:
+# github.com/golang/protobuf/proto.(*marshalFieldInfo).computeOneofFieldInfo.makeOneOfMarshaler.func1({0xc000152e70?}, 0xc000427320?)
+# 	/<<PKGBUILDDIR>>/_build/src/github.com/golang/protobuf/proto/table_marshal.go:2373 +0xa0
+# github.com/golang/protobuf/proto.(*marshalInfo).size(0xc000152e70, {0x195?})
+# -- I suspect this is a bug in ancient protobuf code that won't appear in APIv2
+override_dh_auto_test:
+	rm -fv _build/src/github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials/credentials_test.go
+	rm -fv _build/src/github.com/spiffe/go-spiffe/v2/workloadapi/client_test.go
+	dh_auto_test $(DH_BUILD_OPTS)
+
 %:
-	dh $@
+	dh $@ --builddirectory=_build --buildsystem=golang --with=golang
+
+execute_before_dh_auto_configure:
+	cp $(CURDIR)/v2/go.mod $(CURDIR)/go.mod
+	cd v2/proto/spiffe/workload && \
+	protoc --go-grpc_out=. --go-grpc_opt=paths=source_relative workload.proto && \
+	protoc --go_out=. --go_opt=paths=source_relative workload.proto
+
+override_dh_auto_clean:
+	rm -f $(CURDIR)/go.mod
+	dh_auto_clean

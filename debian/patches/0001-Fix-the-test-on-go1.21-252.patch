@@ -1,0 +1,27 @@
+From 04f99837aed10405d235e658f0874f807bc81fc7 Mon Sep 17 00:00:00 2001
+From: Sword <sword@cybozu.co.jp>
+Date: Thu, 18 Jan 2024 06:41:55 +0800
+Subject: [PATCH] Fix the test on go1.21 (#252)
+Forwarded: https://github.com/spiffe/go-spiffe/pull/252
+
+Signed-off-by: sword-jin <rrylee1994@gmail.com>
+---
+ v2/spiffetls/tlsconfig/config_test.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/v2/spiffetls/tlsconfig/config_test.go b/v2/spiffetls/tlsconfig/config_test.go
+index 0d640c8..6bdb68d 100644
+--- a/v2/spiffetls/tlsconfig/config_test.go
++++ b/v2/spiffetls/tlsconfig/config_test.go
+@@ -772,7 +772,7 @@ func testConnection(t testing.TB, serverConfig *tls.Config, clientConfig *tls.Co
+ 		if conn != nil {
+ 			conn.Close()
+ 		}
+-		require.EqualError(t, err, clientErr)
++		require.ErrorContains(t, err, clientErr)
+ 		return
+ 	}
+ 
+-- 
+2.34.1
+

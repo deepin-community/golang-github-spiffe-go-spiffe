@@ -1,0 +1,21 @@
+Index: golang-github-spiffe-go-spiffe/v2/workloadapi/client.go
+===================================================================
+--- golang-github-spiffe-go-spiffe.orig/v2/workloadapi/client.go
++++ golang-github-spiffe-go-spiffe/v2/workloadapi/client.go
+@@ -17,7 +17,6 @@ import (
+ 
+ 	"google.golang.org/grpc"
+ 	"google.golang.org/grpc/codes"
+-	"google.golang.org/grpc/credentials/insecure"
+ 	"google.golang.org/grpc/metadata"
+ 	"google.golang.org/grpc/status"
+ )
+@@ -254,7 +253,7 @@ func (c *Client) ValidateJWTSVID(ctx con
+ }
+ 
+ func (c *Client) newConn(ctx context.Context) (*grpc.ClientConn, error) {
+-	c.config.dialOptions = append(c.config.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
++	c.config.dialOptions = append(c.config.dialOptions, grpc.WithInsecure())
+ 	c.appendDialOptionsOS()
+ 	return grpc.DialContext(ctx, c.config.address, c.config.dialOptions...)
+ }
